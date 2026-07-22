@@ -1,0 +1,18 @@
+name: BRKEconomy
+version: '${version}'
+
+main: space.byeoruk.economy.MainPlugin
+api-version: '26.2'
+load: STARTUP
+
+dependencies:
+  server:
+    BRKLib:
+      load: BEFORE
+      required: true
+    Vault:
+      load: BEFORE
+      required: true
+
+author: 'qufnr'
+website: 'https://x.com/qufnrp'
