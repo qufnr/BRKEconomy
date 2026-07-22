@@ -36,9 +36,18 @@ class EconomyManager(private val plugin: MainPlugin) {
      * 자금 설정
      *
      * @param uuid 플레이어 UUID
+     * @param value 설정할 자금
      */
     fun setBalance(uuid: UUID, value: BigDecimal) {
+        if (!balances.containsKey(uuid)) {
+            plugin.databaseManager.saveBalance(uuid, value)
+            return
+        }
+
         balances[uuid] = value
+        plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
+            plugin.databaseManager.saveBalance(uuid, value)
+        })
     }
 
     /**
@@ -58,14 +67,18 @@ class EconomyManager(private val plugin: MainPlugin) {
             return
         }
 
-        balances[uuid] = balances[uuid]!! + value
+        val newBalance = balances[uuid]!! + value
+        balances[uuid] = newBalance
+        plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
+            plugin.databaseManager.saveBalance(uuid, newBalance)
+        })
     }
 
     /**
      * 자금 차감
      *
      * @param uuid 플레이어 UUID
-     * @param value 추가할 자금
+     * @param value 차감할 자금
      */
     fun withdrawBalance(uuid: UUID, value: BigDecimal) {
         if (value <= BigDecimal.ZERO) {
@@ -74,23 +87,20 @@ class EconomyManager(private val plugin: MainPlugin) {
 
         if (!balances.containsKey(uuid)) {
             val targetBalance = plugin.databaseManager.readBalance(uuid)
-            //  차감했을 때 음수일 경우 0으로 설정
-            if (targetBalance - value < BigDecimal.ZERO) {
-                plugin.databaseManager.saveBalance(uuid, BigDecimal.ZERO)
-            }
-            else {
-                plugin.databaseManager.saveBalance(uuid, targetBalance - value)
-            }
+            // 차감했을 때 음수일 경우 0으로 설정
+            val newBalance = if (targetBalance - value < BigDecimal.ZERO) BigDecimal.ZERO else targetBalance - value
+            plugin.databaseManager.saveBalance(uuid, newBalance)
             return
         }
 
-        //  위 조건과 마찬가지 음수 방지
-        if (balances[uuid]!! - value < BigDecimal.ZERO) {
-            balances[uuid] = BigDecimal.ZERO
-        }
-        else {
-            balances[uuid] = balances[uuid]!! - value
-        }
+        // 위 조건과 마찬가지 음수 방지
+        val currentBalance = balances[uuid]!!
+        val newBalance = if (currentBalance - value < BigDecimal.ZERO) BigDecimal.ZERO else currentBalance - value
+        balances[uuid] = newBalance
+
+        plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
+            plugin.databaseManager.saveBalance(uuid, newBalance)
+        })
     }
 
     /**
@@ -116,6 +126,15 @@ class EconomyManager(private val plugin: MainPlugin) {
         }
 
         plugin.databaseManager.saveBalance(uuid, balance)
+    }
+
+    /**
+     * 자금 맵 비우기
+     *
+     * @param uuid 플레이어 UUID
+     */
+    fun removeBalance(uuid: UUID) {
+        balances.remove(uuid)
     }
 
     /**

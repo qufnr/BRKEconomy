@@ -18,5 +18,6 @@ class EconomyListener(private val plugin: MainPlugin) : Listener {
     private fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         plugin.economyManager.saveBalance(player.uniqueId)
+        plugin.economyManager.removeBalance(player.uniqueId)
     }
 }

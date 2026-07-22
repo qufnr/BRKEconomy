@@ -138,11 +138,7 @@ class BRKEconomy(
         }
         val newBalance = currentBalance - amount
 
-        val player = plugin.server.getPlayer(accountId)
-        if (player != null && player.isOnline) {
-            plugin.economyManager.setBalance(accountId, newBalance)
-        }
-        plugin.databaseManager.saveBalance(accountId, newBalance)
+        plugin.economyManager.setBalance(accountId, newBalance)
 
         return EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, "")
     }
@@ -158,11 +154,7 @@ class BRKEconomy(
         val currentBalance = balance(pluginName, accountId)
         val newBalance = currentBalance + amount
 
-        val player = plugin.server.getPlayer(accountId)
-        if (player != null && player.isOnline) {
-            plugin.economyManager.setBalance(accountId, newBalance)
-        }
-        plugin.databaseManager.saveBalance(accountId, newBalance)
+        plugin.economyManager.setBalance(accountId, newBalance)
 
         return EconomyResponse(amount, newBalance, EconomyResponse.ResponseType.SUCCESS, "")
     }
