@@ -10,7 +10,6 @@ import space.byeoruk.economy.listener.EconomyListener
 import space.byeoruk.economy.listener.EconomyTransferListener
 import space.byeoruk.economy.manager.EconomyManager
 import space.byeoruk.economy.manager.DatabaseManager
-import space.byeoruk.economy.manager.EconomyTransferManager
 import space.byeoruk.economy.vault.BRKEconomy
 import space.byeoruk.economy.vault.BRKLegacyEconomy
 
@@ -18,8 +17,6 @@ class MainPlugin : JavaPlugin() {
     lateinit var globalConfig: GlobalConfig
         private set
     lateinit var economyManager: EconomyManager
-        private set
-    lateinit var economyTransferManager: EconomyTransferManager
         private set
     lateinit var databaseManager: DatabaseManager
         private set
@@ -56,7 +53,6 @@ class MainPlugin : JavaPlugin() {
 
     private fun registerManagers() {
         databaseManager = DatabaseManager(this)
-        economyTransferManager = EconomyTransferManager()
         economyManager = EconomyManager(this)
     }
 

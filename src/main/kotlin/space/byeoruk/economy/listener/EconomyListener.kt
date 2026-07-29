@@ -10,7 +10,7 @@ class EconomyListener(private val plugin: MainPlugin) : Listener {
     @EventHandler
     private fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        plugin.economyTransferManager.clear(player)
+        plugin.economyManager.closeTransfer(player)
         plugin.economyManager.readBalance(player.uniqueId)
     }
 

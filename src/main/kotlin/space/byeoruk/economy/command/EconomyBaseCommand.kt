@@ -6,7 +6,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import space.byeoruk.economy.MainPlugin
-import space.byeoruk.economy.inventory.EconomyTransferInventory
 import space.byeoruk.lib.command.CommandUtility
 import space.byeoruk.lib.string.EmojiUtility.replaceEmojis
 import space.byeoruk.lib.string.StringUtility.appendJosa
@@ -171,7 +170,7 @@ class EconomyBaseCommand(
 
         val opponent = CommandUtility.findOpponent(sender, args[1], false, prefix) ?: return
 
-        EconomyTransferInventory.open(plugin, sender, opponent)
+        plugin.economyManager.openTransfer(sender, opponent.uniqueId)
     }
 
     private fun executeOpCommand(sender: Player, command: String, args: Array<out String>) {

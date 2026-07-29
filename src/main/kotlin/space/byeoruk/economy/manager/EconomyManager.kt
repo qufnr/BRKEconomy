@@ -1,12 +1,16 @@
 package space.byeoruk.economy.manager
 
+import org.bukkit.entity.Player
 import space.byeoruk.economy.MainPlugin
+import space.byeoruk.economy.inventory.TransferInventory
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class EconomyManager(private val plugin: MainPlugin) {
     private val balances = mutableMapOf<UUID, BigDecimal>()
+    private val transfers = ConcurrentHashMap<UUID, TransferInventory>()
 
     /**
      * 자금 포맷
@@ -136,6 +140,44 @@ class EconomyManager(private val plugin: MainPlugin) {
     fun removeBalance(uuid: UUID) {
         balances.remove(uuid)
     }
+
+    /**
+     * 자금 전송 열기
+     *
+     * @param player 플레이어
+     * @param opponent 대상 UUID
+     */
+    fun openTransfer(player: Player, opponent: UUID) {
+        val transfer = transfers.getOrPut(player.uniqueId) {
+            TransferInventory(player, opponent, plugin)
+        }
+        transfer.open()
+    }
+
+    /**
+     * 플레이어가 자금 전송 중인지 여부 반환
+     *
+     * @param player 플레이어
+     * @return 자금을 전송 중일 경우 true 아니면 false 반환
+     */
+    fun isTransfer(player: Player) = transfers.containsKey(player.uniqueId)
+
+    /**
+     * 자금 전송 닫기
+     *
+     * @param player 플레이어
+     */
+    fun closeTransfer(player: Player) {
+        transfers.remove(player.uniqueId)
+    }
+
+    /**
+     * 자금 전송 인벤토리 확인
+     *
+     * @param player 플레이어
+     * @return 자금 전송 인벤토리
+     */
+    fun getTransferInventory(player: Player): TransferInventory? = transfers[player.uniqueId]
 
     /**
      * 자금 보내기

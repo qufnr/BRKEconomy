@@ -1,7 +1,6 @@
 package space.byeoruk.economy.listener
 
 import net.kyori.adventure.text.minimessage.MiniMessage
-import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -11,11 +10,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.inventory.PrepareAnvilEvent
 import org.bukkit.inventory.InventoryView
-import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.view.AnvilView
 import space.byeoruk.economy.MainPlugin
-import space.byeoruk.economy.inventory.EconomyTransferInventory
-import space.byeoruk.economy.utility.IconItemUtility
 import space.byeoruk.lib.sound.SoundUtility.playFailSound
 import space.byeoruk.lib.sound.SoundUtility.playOkSound
 import space.byeoruk.lib.string.StringUtility.appendJosa
@@ -26,8 +22,12 @@ class EconomyTransferListener(
 ) : Listener {
     private val mm = MiniMessage.miniMessage()
 
-    private fun isTransferMenu(player: Player, view: InventoryView): Boolean {
-        return plugin.economyTransferManager.isTransfer(player) && view.type == InventoryType.ANVIL
+    private fun isTransferring(player: Player, view: InventoryView): Boolean {
+        val transfer = plugin.economyManager.getTransferInventory(player) ?: return false
+
+        return plugin.economyManager.isTransfer(player) &&
+                transfer.inventory.type == InventoryType.ANVIL &&
+                transfer.inventory.type == view.type
     }
 
     /**
@@ -38,23 +38,21 @@ class EconomyTransferListener(
     @EventHandler
     fun onPrepareAnvil(event: PrepareAnvilEvent) {
         val view = event.view
-        val viewers = event.viewers
+        val player = event.view.player as? Player ?: return
 
-        for (viewer in viewers) {
-            val player = viewer as Player
-            if (!isTransferMenu(player, view)) {
-                return
-            }
+        if (!isTransferring(player, view)) {
+            player.closeInventory()
+            return
         }
+
+        //  무조건 있어야 함
+        val transferInventory = plugin.economyManager.getTransferInventory(player)!!
 
         view.repairCost = 0
         view.repairItemCountCost = 0
         view.maximumRepairCost = 0
 
-        val player = event.view.player as Player
-        val opponent = plugin.economyTransferManager.getTransferOpponent(player)
-
-        event.result = IconItemUtility.transferIcon(plugin, player, opponent)
+        event.result = transferInventory.getSubmitIcon()
         //  이거 안하면 `result` 로 설정한 아이템 표시 안 됨
         player.updateInventory()
     }
@@ -71,15 +69,15 @@ class EconomyTransferListener(
         val view = event.view
         val player = event.player as Player
 
-        if (!isTransferMenu(player, view)) {
+        if (!isTransferring(player, view)) {
             return
         }
 
-        val inventory = event.inventory
         for (i in 0..2) {
-            inventory.setItem(i, ItemStack(Material.AIR))
+            event.inventory.setItem(i, null)
         }
-        plugin.economyTransferManager.clear(player)
+
+        plugin.economyManager.closeTransfer(player)
     }
 
     /**
@@ -89,57 +87,58 @@ class EconomyTransferListener(
      */
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
-        val view = event.view
-        val player = event.whoClicked as Player
+        val player = event.whoClicked as? Player ?: return
 
-        if (!isTransferMenu(player, view)) {
+        if (!isTransferring(player, event.view)) {
             return
         }
 
-        val item = event.currentItem ?: return
         event.isCancelled = true
+
         val slot = event.rawSlot
-        val anvilView = view as AnvilView
+        val view = event.view as AnvilView
 
-        if (slot == EconomyTransferInventory.CONFIRM_SLOT_INDEX) {
-            if (item.type == Material.GOLD_INGOT) {
-                val opponent = plugin.economyTransferManager.getTransferOpponent(player)
-                if (opponent == null) {
-                    player.sendActionBar { mm.deserialize("<red>대상이 유효하지 않아요") }
-                    player.playFailSound()
-                    player.closeInventory()
-                    return
-                }
-
-                val inputBalance = anvilView.renameText?.toBigDecimalOrNull()
-                if (inputBalance == null || inputBalance <= BigDecimal.ZERO) {
-                    player.sendActionBar { mm.deserialize("<red>올바른 숫자를 입력해 주세요") }
-                    player.playFailSound()
-                    return
-                }
-
-                val currencyName = plugin.economyManager.currencyName()
-                val balance = plugin.economyManager.getBalance(player.uniqueId)
-                val formatInputBalance = plugin.economyManager.format(inputBalance)
-                if (balance < inputBalance) {
-                    player.sendActionBar { mm.deserialize("<red>$formatInputBalance 만큼 보낼 ${currencyName.appendJosa("이가")} 없어요") }
-                    player.playFailSound()
-                    return
-                }
-
-                val prefix = plugin.globalConfig.prefix
-                if (!plugin.economyManager.transfer(player.uniqueId, opponent.uniqueId, inputBalance)) {
-                    player.sendMessage { mm.deserialize("${prefix}${currencyName.appendJosa("을를")} 보내는 데 실패했어요") }
-                    player.playFailSound()
-                }
-                else {
-                    player.sendMessage { mm.deserialize("${prefix}${opponent.name}에게 ${currencyName.appendJosa("을를")} <white>${formatInputBalance}</white> 만큼 보냈어요") }
-                    player.playOkSound()
-                    opponent.sendMessage { mm.deserialize("${prefix}${player.name}이(가) 나에게 ${currencyName.appendJosa("을를")} <white>${formatInputBalance}</white> 만큼 보냈어요") }
-                    opponent.playOkSound()
-                }
-            }
-            player.closeInventory()
+        //  결과 아이템 슬롯이 아니면 클릭 무시
+        if (slot != 2) {
+            return
         }
+
+        val transferInventory = plugin.economyManager.getTransferInventory(player)!!
+
+        val opponent = transferInventory.opponent
+        if (opponent == null) {
+            player.playFailSound()
+            player.closeInventory()
+            return
+        }
+
+        val inputValue = view.renameText?.toBigDecimalOrNull()
+        if (inputValue == null || inputValue <= BigDecimal.ZERO) {
+            player.sendActionBar { mm.deserialize("<red>올바른 숫자를 입력해 주세요") }
+            player.playFailSound()
+            return
+        }
+
+        val currencyName = plugin.economyManager.currencyName()
+        val balance = plugin.economyManager.getBalance(player.uniqueId)
+        val formatInputBalance = plugin.economyManager.format(inputValue)
+        if (balance < inputValue) {
+            player.sendActionBar { mm.deserialize("<red>${currencyName.appendJosa("이가")} 부족해요") }
+            player.playFailSound()
+            return
+        }
+
+        val prefix = plugin.globalConfig.prefix
+        if (!transferInventory.transfer(inputValue)) {
+            player.sendMessage { mm.deserialize("${prefix}${currencyName.appendJosa("을를")} 보내는 데 실패했어요") }
+            player.playFailSound()
+        }
+        else {
+            player.sendMessage { mm.deserialize("${prefix}${opponent.name}에게 ${currencyName.appendJosa("을를")} <white>${formatInputBalance}</white> 만큼 보냈어요") }
+            player.playOkSound()
+            opponent.sendMessage { mm.deserialize("${prefix}${player.name}이(가) 나에게 ${currencyName.appendJosa("을를")} <white>${formatInputBalance}</white> 만큼 보냈어요") }
+            opponent.playOkSound()
+        }
+        player.closeInventory()
     }
 }
