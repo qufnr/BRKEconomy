@@ -41,7 +41,6 @@ class EconomyTransferListener(
         val player = event.view.player as? Player ?: return
 
         if (!isTransferring(player, view)) {
-            player.closeInventory()
             return
         }
 
@@ -73,11 +72,11 @@ class EconomyTransferListener(
             return
         }
 
-        for (i in 0..2) {
-            event.inventory.setItem(i, null)
-        }
-
         plugin.economyManager.closeTransfer(player)
+
+        val inventory = event.inventory
+        inventory.setItem(0, null)
+        inventory.setItem(1, null)
     }
 
     /**
