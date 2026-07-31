@@ -6,9 +6,9 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import space.byeoruk.economy.MainPlugin
-import space.byeoruk.lib.command.CommandUtility
-import space.byeoruk.lib.string.EmojiUtility.replaceEmojis
-import space.byeoruk.lib.string.StringUtility.appendJosa
+import space.byeoruk.lib.utility.command.CommandUtility
+import space.byeoruk.lib.utility.string.EmojiUtility.replaceEmojis
+import space.byeoruk.lib.utility.string.StringUtility.appendJosa
 
 class EconomyBaseCommand(
     private val plugin: MainPlugin,

@@ -8,9 +8,9 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.MenuType
 import space.byeoruk.economy.MainPlugin
 import space.byeoruk.lib.builder.item.ItemBuilder
-import space.byeoruk.lib.item.IconItem
-import space.byeoruk.lib.string.EmojiUtility.replaceEmojis
-import space.byeoruk.lib.string.StringUtility.appendJosa
+import space.byeoruk.lib.utility.item.IconItem
+import space.byeoruk.lib.utility.string.EmojiUtility.replaceEmojis
+import space.byeoruk.lib.utility.string.StringUtility.appendJosa
 import java.math.BigDecimal
 import java.util.UUID
 
