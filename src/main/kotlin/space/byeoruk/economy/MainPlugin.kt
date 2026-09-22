@@ -4,12 +4,11 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import net.milkbowl.vault2.economy.Economy
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
-import space.byeoruk.economy.command.EconomyBaseCommand
+import space.byeoruk.economy.command.EconomyCommand
 import space.byeoruk.economy.config.GlobalConfig
 import space.byeoruk.economy.listener.EconomyListener
-import space.byeoruk.economy.listener.EconomyTransferListener
 import space.byeoruk.economy.manager.EconomyManager
-import space.byeoruk.economy.manager.DatabaseManager
+import space.byeoruk.economy.manager.EconomyDatabaseManager
 import space.byeoruk.economy.vault.BRKEconomy
 import space.byeoruk.economy.vault.BRKLegacyEconomy
 
@@ -18,7 +17,7 @@ class MainPlugin : JavaPlugin() {
         private set
     lateinit var economyManager: EconomyManager
         private set
-    lateinit var databaseManager: DatabaseManager
+    lateinit var economyDatabaseManager: EconomyDatabaseManager
         private set
 
     lateinit var economy: Economy
@@ -31,7 +30,7 @@ class MainPlugin : JavaPlugin() {
             return
         }
 
-        globalConfig = GlobalConfig(this)
+        globalConfig = GlobalConfig.build(this)
 
         registerManagers()
         registerEventListeners()
@@ -43,27 +42,27 @@ class MainPlugin : JavaPlugin() {
         //  서버가 종료되는 시점에는 플러그인 비활성화 후 PlayerQuitEvent 가 터지기 때문에, 여기서 저장 처리해야 함
         if (::economyManager.isInitialized) {
             server.onlinePlayers.forEach { economyManager.saveBalance(it.uniqueId) }
+            economyManager.closeTransferAll()
         }
 
         //  데이터베이스 커넥션 풀 닫기
-        if (::databaseManager.isInitialized) {
-            databaseManager.close()
+        if (::economyDatabaseManager.isInitialized) {
+            economyDatabaseManager.close()
         }
     }
 
     private fun registerManagers() {
-        databaseManager = DatabaseManager(this)
+        economyDatabaseManager = EconomyDatabaseManager(this)
         economyManager = EconomyManager(this)
     }
 
     private fun registerEventListeners() {
         server.pluginManager.registerEvents(EconomyListener(this), this)
-        server.pluginManager.registerEvents(EconomyTransferListener(this), this)
     }
 
     private fun registerCommands() {
         lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) {
-            it.registrar().register(globalConfig.commandLabel, EconomyBaseCommand(this))
+            it.registrar().register(globalConfig.commandLabel, EconomyCommand(this))
         }
     }
 
@@ -80,5 +79,11 @@ class MainPlugin : JavaPlugin() {
         economy = brkEconomy
 
         return true
+    }
+
+    fun reloadConfigs() {
+        reloadConfig()
+
+        globalConfig = GlobalConfig.build(this)
     }
 }

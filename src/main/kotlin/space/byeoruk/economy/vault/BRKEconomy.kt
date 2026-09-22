@@ -50,7 +50,7 @@ class BRKEconomy(
     @Deprecated("Deprecated in Java")
     override fun createAccount(accountId: UUID, name: String): Boolean {
         if (!hasAccount(accountId)) {
-            plugin.databaseManager.saveBalance(accountId, BigDecimal.ZERO)
+            plugin.economyDatabaseManager.saveBalance(accountId, BigDecimal.ZERO)
         }
         return true
     }
@@ -76,7 +76,7 @@ class BRKEconomy(
         if (player != null && player.isOnline) {
             return true
         }
-        return plugin.databaseManager.hasAccount(accountId)
+        return plugin.economyDatabaseManager.hasAccount(accountId)
     }
 
     override fun hasAccount(accountId: UUID, worldName: String): Boolean =
@@ -106,7 +106,7 @@ class BRKEconomy(
         return if (player != null && player.isOnline) {
             plugin.economyManager.getBalance(accountId)
         } else {
-            plugin.databaseManager.readBalance(accountId)
+            plugin.economyDatabaseManager.readBalance(accountId)
         }
     }
 

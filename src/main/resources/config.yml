@@ -1,19 +1,24 @@
-command-line: '골드'
-text:
+economy:
+  database:
+    enabled: false
+    url: 'localhost:3306'
+    name: 'brk_smp'
+    driver-class-name: 'com.mysql.cj.jdbc.Driver'
+    username: 'root'
+    password: '1234'
+    maximum-pool-size: 10
+    minimum-idle: 5
+    connection-timeout: 10000
+    idle-timeout: 600000
+  lang: ko
   prefix: '<grey>[@] '
-  transfer-inventory-title: ':offset_-60::economy_transfer:'
-currency:
-  name: '골드'
-  unit-name: ':gold:'
-  format: '#,###'
-database:
-  enabled: false
-  url: 'localhost:3306'
-  name: 'brk_smp'
-  driver-class-name: 'com.mysql.cj.jdbc.Driver'
-  username: 'root'
-  password: '1234'
-  maximum-pool-size: 10
-  minimum-idle: 5
-  connection-timeout: 10000
-  idle-timeout: 600000
+  namespace: 'byeoruksmp'
+  command-label: '골드'
+  currency-name: '골드'
+  currency-unit-symbol: ':gold:'
+  currency-format: '#,###'
+  inventory:
+    transfer:
+      title: ':offset_-60::economy_transfer:'
+      confirm-icon: 'minecraft:gold_ingot'
+      invisible_icon: 'invisible_icon'

@@ -1,0 +1,46 @@
+message:
+  command:
+    unknown: '알 수 없는 명령어입니다'
+    usage: '사용법: {0}'
+    opponent-unknown: '대상이 존재하지 않습니다'
+    invalid-number: '올바른 숫자로 입력해 주세요'
+    no-permission: '접근 권한이 없습니다'
+    main:
+      description: '소지 중인 골드를 확인합니다'
+    help:
+      description: '골드에 대한 명령어를 확인합니다'
+    info:
+      description: '나 또는 상대의 골드를 확인합니다'
+    transfer:
+      description: '상대에게 골드를 보냅니다'
+      enter-amount: '보낼 골드를 입력해 주세요'
+      too-lower: '보내려는 골드가 적습니다'
+      confirm: '{0}에게 <gold>{1} 골드</gold> 만큼 보냅니다'
+      shortage-balance: '골드가 부족합니다'
+      success: '<white>{0}</white>에게 <gold>{1} 골드</gold>를 보냈습니다'
+      success-to-target: '<white>{0}</white>이(가) 나에게 <gold>{1} 골드</gold>를 보냈습니다'
+      opponent-is-offline: '대상이 오프라인입니다'
+    set:
+      success: '<white>{0}</white>의 골드를 <white>{1}</white>으(로) 설정했습니다'
+      success-to-target: '관리자에 의해 소지 골드가 <white>{0}</white>으(로) 설정됐습니다'
+    add:
+      success: '<white>{0}</white>의 골드를 <white>{1}</white> 만큼 추가했습니다'
+      succes-to-target: '관리자에 의해 소지 골드에서 <white>{0}</white> 만큼 추가됐습니다'
+    subtract:
+      success: '<white>{0}</white>의 골드를 <white>{1}</white> 만큼 차감했습니다'
+      success-to-target: '관리자에 의해 소지 골드에서 <white>{0}</white> 만큼 차감됐습니다'
+    reload:
+      description: '다시 로드합니다'
+      success: '설정을 다시 불러왔습니다'
+      transfer-safe-closed: '관리자에 의해 시스템 설정을 다시 불러왔습니다. <white>/골드 보내기</white> 명령어로 다시 골드를 보내주세요'
+text:
+  info: '소지 중인 골드: <gold>{0}</gold>'
+  opponent-info: '{0}의 소지 중인 골드: <gold>{1}</gold>'
+  error: '오류'
+  transfer: '골드 보내기'
+  transfer-confirm: '보내기'
+  transfer-target: '대상'
+  transfer-target-balance: '소지 골드'
+  action:
+    click-to-close: '클릭해서 닫기'
+    click-to-transfer: '클릭해서 대상에게 보내기'

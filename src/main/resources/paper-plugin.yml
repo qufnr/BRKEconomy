@@ -14,5 +14,28 @@ dependencies:
       load: BEFORE
       required: true
 
+permissions:
+  economy.help:
+    description: '도움말을 확인합니다'
+    default: true
+  economy.info:
+    description: '대상의 자금을 확인합니다'
+    default: true
+  economy.transfer:
+    description: '대상에게 자금을 보냅니다'
+    default: true
+  economy.set:
+    description: '대상의 자금을 설정합니다'
+    default: op
+  economy.add:
+    description: '대상의 자금을 추가합니다'
+    default: op
+  economy.subtract:
+    description: '대상의 자금을 차감합니다'
+    default: op
+  economy.reload:
+    description: '플러그인을 리로드합니다'
+    default: op
+
 author: 'qufnr'
 website: 'https://x.com/qufnrp'

@@ -1,39 +1,40 @@
 package space.byeoruk.economy.config
 
 import space.byeoruk.economy.MainPlugin
+import space.byeoruk.lib.config.utility.LangConfiguration
+import space.byeoruk.lib.database.dto.DatabaseConfiguration
 
-class GlobalConfig(plugin: MainPlugin) {
-    var prefix: String = "<grey>[@] "
-        private set
-    var transferInventoryTitle: String = ":offset_-60::economy_transfer:"
-        private set
-    var commandLabel: String = "골드"
-        private set
-    var currencyName: String = "골드"
-        private set
-    var currencyUnitSymbol: String = ":gold:"
-        private set
-    var currencyFormat: String = "#,###"
-        private set
-    var database: DatabaseConfig
-        private set
-    var namespace: String = "byeoruksmp"
-        private set
+data class GlobalConfig(
+    val lang: LangConfiguration,
+    val langCode: String = "ko",
+    val database: DatabaseConfiguration,
+    val inventory: InventoryConfig,
+    val prefix: String = "<grey>[@] ",
+    val namespace: String = "byeoruksmp",
+    val commandLabel: String = "골드",
+    val currencyName: String = "골드",
+    val currencyUnitSymbol: String = ":gold:",
+    val currencyFormat: String = "#,###",
+) {
+    companion object {
+        fun build(plugin: MainPlugin): GlobalConfig {
+            plugin.saveDefaultConfig()
+            plugin.saveConfig()
 
-    init {
-        plugin.saveDefaultConfig()
-        plugin.reloadConfig()
+            val config = plugin.config
+            val langCode = config.getString("economy.lang", "ko") ?: "ko"
 
-        val config = plugin.config
-
-        prefix = config.getString("text.prefix", "<grey>[@] ") ?: "<grey>[@] "
-        transferInventoryTitle = config.getString("text.transfer-inventory-title", ":offset_-60::economy_transfer:") ?: ":offset_-60::economy_transfer:"
-        commandLabel = config.getString("command-label", "골드") ?: "골드"
-        currencyName = config.getString("currency.name", "골드") ?: "골드"
-        currencyUnitSymbol = config.getString("currency.unit-name", ":gold:") ?: ":gold:"
-        currencyFormat = config.getString("currency.format", "#,###") ?: "#,###"
-        namespace = config.getString("namespace", "byeoruksmp") ?: "byeoruksmp"
-
-        database = DatabaseConfig(config)
+            return GlobalConfig(
+                lang = LangConfiguration.load(plugin, langCode),
+                database = DatabaseConfiguration.build(plugin, "economy.database"),
+                inventory = InventoryConfig.build(config),
+                prefix = config.getString("economy.prefix", "<grey>[@] ") ?: "<grey>[@] ",
+                namespace = config.getString("economy.namespace", "byeoruksmp") ?: "byeoruksmp",
+                commandLabel = config.getString("economy.command-label", "골드") ?: "골드",
+                currencyName = config.getString("economy.currency-name", "골드") ?: "골드",
+                currencyUnitSymbol = config.getString("economy.currency-unit-symbol", ":gold:") ?: ":gold:",
+                currencyFormat = config.getString("economy.currency-format", "#,###") ?: "#,###",
+            )
+        }
     }
 }

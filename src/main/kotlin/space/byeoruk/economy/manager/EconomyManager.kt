@@ -2,7 +2,8 @@ package space.byeoruk.economy.manager
 
 import org.bukkit.entity.Player
 import space.byeoruk.economy.MainPlugin
-import space.byeoruk.economy.inventory.TransferInventory
+import space.byeoruk.economy.dto.TransferOpponent
+import space.byeoruk.economy.inventory.EconomyTransferInventory
 import java.math.BigDecimal
 import java.text.DecimalFormat
 import java.util.UUID
@@ -10,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class EconomyManager(private val plugin: MainPlugin) {
     private val balances = mutableMapOf<UUID, BigDecimal>()
-    private val transfers = ConcurrentHashMap<UUID, TransferInventory>()
+    private val transfers = ConcurrentHashMap<UUID, EconomyTransferInventory>()
 
     /**
      * 자금 포맷
@@ -44,13 +45,13 @@ class EconomyManager(private val plugin: MainPlugin) {
      */
     fun setBalance(uuid: UUID, value: BigDecimal) {
         if (!balances.containsKey(uuid)) {
-            plugin.databaseManager.saveBalance(uuid, value)
+            plugin.economyDatabaseManager.saveBalance(uuid, value)
             return
         }
 
         balances[uuid] = value
         plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
-            plugin.databaseManager.saveBalance(uuid, value)
+            plugin.economyDatabaseManager.saveBalance(uuid, value)
         })
     }
 
@@ -66,15 +67,15 @@ class EconomyManager(private val plugin: MainPlugin) {
         }
 
         if (!balances.containsKey(uuid)) {
-            val targetBalance = plugin.databaseManager.readBalance(uuid)
-            plugin.databaseManager.saveBalance(uuid, targetBalance + value)
+            val targetBalance = plugin.economyDatabaseManager.readBalance(uuid)
+            plugin.economyDatabaseManager.saveBalance(uuid, targetBalance + value)
             return
         }
 
         val newBalance = balances[uuid]!! + value
         balances[uuid] = newBalance
         plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
-            plugin.databaseManager.saveBalance(uuid, newBalance)
+            plugin.economyDatabaseManager.saveBalance(uuid, newBalance)
         })
     }
 
@@ -90,10 +91,10 @@ class EconomyManager(private val plugin: MainPlugin) {
         }
 
         if (!balances.containsKey(uuid)) {
-            val targetBalance = plugin.databaseManager.readBalance(uuid)
+            val targetBalance = plugin.economyDatabaseManager.readBalance(uuid)
             // 차감했을 때 음수일 경우 0으로 설정
             val newBalance = if (targetBalance - value < BigDecimal.ZERO) BigDecimal.ZERO else targetBalance - value
-            plugin.databaseManager.saveBalance(uuid, newBalance)
+            plugin.economyDatabaseManager.saveBalance(uuid, newBalance)
             return
         }
 
@@ -103,7 +104,7 @@ class EconomyManager(private val plugin: MainPlugin) {
         balances[uuid] = newBalance
 
         plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable {
-            plugin.databaseManager.saveBalance(uuid, newBalance)
+            plugin.economyDatabaseManager.saveBalance(uuid, newBalance)
         })
     }
 
@@ -113,7 +114,7 @@ class EconomyManager(private val plugin: MainPlugin) {
      * @param uuid 플레이어 UUID
      */
     fun readBalance(uuid: UUID) {
-        val balance = plugin.databaseManager.readBalance(uuid)
+        val balance = plugin.economyDatabaseManager.readBalance(uuid)
         balances[uuid] = balance
     }
 
@@ -129,7 +130,7 @@ class EconomyManager(private val plugin: MainPlugin) {
             return
         }
 
-        plugin.databaseManager.saveBalance(uuid, balance)
+        plugin.economyDatabaseManager.saveBalance(uuid, balance)
     }
 
     /**
@@ -145,22 +146,14 @@ class EconomyManager(private val plugin: MainPlugin) {
      * 자금 전송 열기
      *
      * @param player 플레이어
-     * @param opponent 대상 UUID
+     * @param opponent 대상 플레이어 DTO
      */
-    fun openTransfer(player: Player, opponent: UUID) {
+    fun openTransfer(player: Player, opponent: TransferOpponent) {
         val transfer = transfers.getOrPut(player.uniqueId) {
-            TransferInventory(player, opponent, plugin)
+            EconomyTransferInventory(plugin, player, opponent)
         }
         transfer.open()
     }
-
-    /**
-     * 플레이어가 자금 전송 중인지 여부 반환
-     *
-     * @param player 플레이어
-     * @return 자금을 전송 중일 경우 true 아니면 false 반환
-     */
-    fun isTransfer(player: Player) = transfers.containsKey(player.uniqueId)
 
     /**
      * 자금 전송 닫기
@@ -172,34 +165,17 @@ class EconomyManager(private val plugin: MainPlugin) {
     }
 
     /**
-     * 자금 전송 인벤토리 확인
+     * 자금 전송 중인 플레이어 화면 닫기
      *
-     * @param player 플레이어
-     * @return 자금 전송 인벤토리
+     * @return 플레이어 목록
      */
-    fun getTransferInventory(player: Player): TransferInventory? = transfers[player.uniqueId]
-
-    /**
-     * 자금 보내기
-     *
-     * @param uuid 플레이어 UUID
-     * @param opponent 대상 UUID
-     * @param value 보낼 자금
-     * @return 자금을 보냈을 경우 true 아니면 false 반환
-     */
-    fun transfer(uuid: UUID, opponent: UUID, value: BigDecimal): Boolean {
-        if (value <= BigDecimal.ZERO) {
-            return false
+    fun closeTransferAll(): List<Player> {
+        val closedViewers = mutableListOf<Player>()
+        transfers.values.forEach { transfer ->
+            transfer.viewer.closeInventory()
+            closedViewers += transfer.viewer
         }
 
-        val senderBalance = balances[uuid] ?: plugin.databaseManager.readBalance(uuid)
-        if (senderBalance < value) {
-            return false
-        }
-
-        withdrawBalance(uuid, value)
-        depositBalance(opponent, value)
-
-        return true
+        return closedViewers
     }
 }

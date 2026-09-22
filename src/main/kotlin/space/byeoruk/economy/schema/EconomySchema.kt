@@ -1,31 +1,41 @@
 package space.byeoruk.economy.schema
 
 import space.byeoruk.economy.column.EconomyColumn
+import space.byeoruk.lib.database.model.SchemaQuery
 
-object EconomySchema {
-    fun createQuery(): String {
-        val columns = EconomyColumn.entries.joinToString(", ") { "${it.column()} ${it.type()}" }
-        return "CREATE TABLE IF NOT EXISTS economy($columns);"
+object EconomySchema : SchemaQuery<EconomyColumn> {
+    override val entries = EconomyColumn.entries
+    override val table = "economy"
+
+    override fun createQuery(useSqlite: Boolean): String {
+        val columns = columnsWithType(useSqlite)
+        return if (!useSqlite)
+            "$createTableQuery($columns) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;"
+        else
+            "$createTableQuery($columns);"
     }
 
     fun whereBalanceQuery(): String =
         """
             SELECT ${EconomyColumn.BALANCE.column()}
-            FROM economy
+            FROM $table 
             WHERE ${EconomyColumn.PLAYER_UUID.column()} = ?
         """.trimIndent()
 
-    fun updateQuery(sqlite: Boolean = false): String {
+    fun updateQuery(useSqlite: Boolean): String {
+        val playerUuid = EconomyColumn.PLAYER_UUID.column()
+        val balance = EconomyColumn.BALANCE.column()
+
         var query = """
-            INSERT INTO economy (${EconomyColumn.PLAYER_UUID.column()}, ${EconomyColumn.BALANCE.column()})
+            INSERT INTO $table($playerUuid, $balance) 
             VALUES(?, ?)
         """.trimIndent()
 
         query +=
-            if (sqlite)
-                " ON CONFLICT(${EconomyColumn.PLAYER_UUID.column()}) DO UPDATE SET ${EconomyColumn.BALANCE.column()} = excluded.${EconomyColumn.BALANCE.column()}"
+            if (useSqlite)
+                " ON CONFLICT($playerUuid) DO UPDATE SET $balance = excluded.$balance"
             else
-                " ON DUPLICATE KEY UPDATE ${EconomyColumn.BALANCE.column()} = VALUES(${EconomyColumn.BALANCE.column()})"
+                " ON DUPLICATE KEY UPDATE $balance = VALUES($balance)"
 
         return query
     }
@@ -33,7 +43,7 @@ object EconomySchema {
     fun whereAccountQuery(): String =
         """
             SELECT 1 
-            FROM economy 
+            FROM $table 
             WHERE ${EconomyColumn.PLAYER_UUID.column()} = ?
         """.trimIndent()
 }

@@ -1,6 +1,6 @@
 package space.byeoruk.economy.column
 
-import space.byeoruk.economy.`interface`.SchemaColumn
+import space.byeoruk.lib.database.model.SchemaColumn
 
 enum class EconomyColumn : SchemaColumn {
     PLAYER_UUID {
